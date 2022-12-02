@@ -3,10 +3,11 @@ from Pages.recording_page import get_recording_in_progress
 from state_enums import *
 from Pages.utils import mount_page
 
+# Callback function from the ready button on the info page
 def start_session(state):
     mount_page(state, get_recording_in_progress(state))
 
-
+# Info page components
 def get_ready_prompt(state):
     ready_prompt_components = []
     
@@ -29,14 +30,14 @@ def get_ready_prompt(state):
     
     return ready_prompt_components
 
-
+# Callback function from the submit button on the landing page
 def submit_user (state, user_id):
     ## TODO: validate user id
     state["recording_session"]["user"] = user_id
     state["render_state"] = render_state.READY_PROMPT
     mount_page(state, get_ready_prompt(state))
 
-
+# Landing page components
 def get_landing_page(state):
     user_enter_components = []
 
