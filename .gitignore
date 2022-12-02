@@ -1,0 +1,5 @@
+__pycache__
+data/STOP/
+data/GO/
+venv
+processed_signals/
