@@ -23,15 +23,15 @@ def eeg_handler(address: str,*args):
     timestamp = time.time_ns() 
     printStr = str(timestamp)
     printStr = dateTimeObj.strftime("%Y-%m-%d %H:%M:%S.%f")
-    # if len(args) == 4: 
-    for arg in args:
-        printStr += ", "+str(arg)
-    results_buffer.append(printStr)
-    if len(results_buffer) >= 10:
-        results_to_write = "\n".join(results_buffer)
-        results_buffer = []
-        with open("./data/"+sys.argv[1] + "/" + sys.argv[2]+ "_" +str(label_time)+".data", "a") as myfile:
-            myfile.write(results_to_write+"\n")
+    if len(args) == 4: 
+        for arg in args:
+            printStr += ", "+str(arg)
+        results_buffer.append(printStr)
+        if len(results_buffer) >= 10:
+            results_to_write = "\n".join(results_buffer)
+            results_buffer = []
+            with open("./data/"+sys.argv[1] + "/" + sys.argv[2]+ "_" +str(label_time)+".data", "a") as myfile:
+                myfile.write(results_to_write+"\n")
     
     if (dateTimeObj-dateTimeObj_start).total_seconds() >= int(sys.argv[3])/1000:
         print("timeout")

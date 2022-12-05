@@ -22,6 +22,7 @@ def load_sample(sample_id):
         for row in csv_reader:
             data.append(row)
     data = np.array(data)
+    print(data.shape)
     timestamps, tp9, af7, af8, tp10= data.T
     tp9, af7, af8, tp10 = np.array(list(map(float, tp9))), np.array(list(map(float, af7))), np.array(list(map(float, af8))), np.array(list(map(float, tp10))
 )
