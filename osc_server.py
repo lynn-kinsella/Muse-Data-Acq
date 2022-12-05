@@ -30,7 +30,7 @@ def eeg_handler(address: str,*args):
         if len(results_buffer) >= 10:
             results_to_write = "\n".join(results_buffer)
             results_buffer = []
-            with open("./data/"+sys.argv[1] + "/" + sys.argv[2]+ "_" +str(label_time)+".data", "a") as myfile:
+            with open("./data/"+sys.argv[1] + "/" + sys.argv[2]+ "_" +str(label_time)+".csv", "a") as myfile:
                 myfile.write(results_to_write+"\n")
     
     if (dateTimeObj-dateTimeObj_start).total_seconds() >= int(sys.argv[3])/1000:
