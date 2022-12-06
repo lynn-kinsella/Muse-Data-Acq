@@ -28,7 +28,14 @@ def start_sample(state):
     data_label = str(state["recording_session"]["state"]).split(".")[1]
     timestamp = (int)(time.mktime(datetime.now().timetuple()))
     state["recording_session"]["timestamp"] = str(timestamp)
+    timeout_counter = 0
     print("Starting sample collection for " + str(timestamp))
+    while(state['osc_server'] != None and state['osc_server'].poll() == None):
+        time.sleep(0.002)
+        timeout_counter += 1
+        if timeout_counter > 1000:
+            state['osc_server'].kill()
+            break
     state['osc_server'] = subprocess.Popen(['python','osc_server.py', data_label, state["recording_session"]["user"], str(get_sample_period()), str(timestamp)])
     # state['osc_server'] = subprocess.Popen(['python','mock_osc_server.py', data_label, state["recording_session"]["user"]], get_sample_period())
 
@@ -37,9 +44,6 @@ def start_sample(state):
 def end_sample(state, refresh_function):
     print("Completed sample collection")
     state["recording_session"]["active"] = False
-    if state['osc_server'] != None:
-        state['osc_server'].kill()  
-        state['osc_server'] = None
 
     refresh_function(state)
 
@@ -51,6 +55,9 @@ def check_data_path_exists(state, refresh_function):
     data_path += state["recording_session"]["timestamp"] + ".csv"
     print("Check for existance of " + data_path)
     if not path.exists(data_path):
+        if state['osc_server'] != None:
+            state['osc_server'].kill()
+            state['osc_server'] = None
         state["recording_session"]["state"] = recording_state.ERROR
         end_sample(state, refresh_function)
 

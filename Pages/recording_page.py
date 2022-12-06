@@ -42,13 +42,13 @@ def get_recording_rest_components(state):
     recording_rest_components = []
     text = "You have completed prompt number " + str(state["recording_session"]["count"]) + "\n Your next prompt begins in"
     rest_text = Label(text=text, font=("Arial", 25))
-
+    placeholder = Label(text="")
     start_sample(state)
     # Attach event to the header text that ends the resting stage
-    state["afters"]["check_collection"] = (rest_text.after(5000, lambda: check_data_path_exists(state, finished_prompt)), rest_text) 
+    state["afters"]["check_collection"] = (placeholder.after(2000, lambda: check_data_path_exists(state, finished_prompt)), placeholder) 
     state["afters"]["finish_recording"] = (rest_text.after(get_sample_period(), lambda: end_sample(state, finished_prompt)), rest_text)
     recording_rest_components.append(rest_text)
-
+    recording_rest_components.append(placeholder)
 
     timer = Label(text=str(get_sample_period()//1000), font=("Arial", 25))
     # Attach event to the timer text that updates it every second       
@@ -65,13 +65,15 @@ def get_session_stop_go_components(state):
     
     if state["recording_session"]["state"] == recording_state.STOP:
          prompt_label = Label(text="STOP", bg="red", fg="white", font=("Arial", 300))
+
+    placeholder = Label(text="")
     
     start_sample(state)
     # Attach event to the header text that ends the sampling stage
-    state["afters"]["check_collection"] = (prompt_label.after(5000, lambda: check_data_path_exists(state, finished_prompt)), prompt_label) 
+    state["afters"]["check_collection"] = (placeholder.after(2000, lambda: check_data_path_exists(state, finished_prompt)), placeholder) 
     state["afters"]["finish_prompt"] = (prompt_label.after(get_sample_period(), lambda: end_sample(state, finished_prompt)), prompt_label) 
 
-    return [(prompt_label, {"pady": 150})]
+    return [(prompt_label, {"pady": 150}), placeholder]
 
 
 def get_session_error_components(state):
@@ -80,7 +82,7 @@ def get_session_error_components(state):
     error_notice = Label(text=error_notice_text, font=("Arial", 32), fg="red")
     recording_error_components.append(error_notice)
 
-    error_explain_text = "Not recieving signal from mindmonitor app. Please check your settings click Ready\n when ready to resume."
+    error_explain_text = "Not recieving signal from mindmonitor app. Please check your\nsettings and click Ready when ready to resume."
     error_explain = Label(text=error_explain_text, font=("Arial", 25))
     recording_error_components.append(error_explain)
 

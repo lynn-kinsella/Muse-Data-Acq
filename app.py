@@ -14,7 +14,6 @@ if __name__ == "__main__":
             "state": recording_state(randint(1,2)),
             "count": 0,
             "active": False,
-            "osc_server": None,
         },
         "render_state": render_state.USER_ENTER,
         "rendered_components": [],
@@ -24,7 +23,8 @@ if __name__ == "__main__":
             "finish_prompt": None,
             "update_timer": None,
             "check_collection": None
-        }
+        },
+        "osc_server": None,
     }
     
     state["ip"] = socket.gethostbyname_ex(socket.gethostname())[-1][-1]
