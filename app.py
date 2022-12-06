@@ -19,7 +19,12 @@ if __name__ == "__main__":
         "render_state": render_state.USER_ENTER,
         "rendered_components": [],
         "ip":"",
-        "window":None
+        "window":None,
+        "afters": {
+            "finish_prompt": None,
+            "update_timer": None,
+            "check_collection": None
+        }
     }
     
     state["ip"] = socket.gethostbyname_ex(socket.gethostname())[-1][-1]

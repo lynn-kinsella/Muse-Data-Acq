@@ -14,7 +14,7 @@ def get_session_done_components(state):
 
     
 # Updates the state and loads the next page in sequence
-def finished_prompt(state):
+def finished_prompt(state):    
     if state["recording_session"]["state"] == recording_state.REST:
         state["recording_session"]["state"] = recording_state(randint(1,2))
 
@@ -29,12 +29,12 @@ def finished_prompt(state):
 
 
 # Gets and increments the timer on the rest page
-def update_countdown_timer(timer):
+def update_countdown_timer(state, timer):
     old_time = int(timer.cget("text"))
     new_time = old_time - 1
     timer.configure(text = str(new_time))
     if new_time != 0:
-        timer.after(1000, lambda: update_countdown_timer(timer))
+        state["afters"]["timer_update"] = (timer.after(1000, lambda: update_countdown_timer(state, timer)), timer)
 
 
 # Returns sub-frame for the resting page
@@ -42,13 +42,17 @@ def get_recording_rest_components(state):
     recording_rest_components = []
     text = "You have completed prompt number " + str(state["recording_session"]["count"]) + "\n Your next prompt begins in"
     rest_text = Label(text=text, font=("Arial", 25))
+
+    start_sample(state)
     # Attach event to the header text that ends the resting stage
-    rest_text.after(get_sample_period(), lambda: finished_prompt(state))
-    recording_rest_components.append(rest_text)  
+    state["afters"]["check_collection"] = (rest_text.after(5000, lambda: check_data_path_exists(state, finished_prompt)), rest_text) 
+    state["afters"]["finish_recording"] = (rest_text.after(get_sample_period(), lambda: end_sample(state, finished_prompt)), rest_text)
+    recording_rest_components.append(rest_text)
+
 
     timer = Label(text=str(get_sample_period()//1000), font=("Arial", 25))
     # Attach event to the timer text that updates it every second       
-    timer.after(1000, lambda: update_countdown_timer(timer))
+    state["afters"]["timer_update"] = (timer.after(1000, lambda: update_countdown_timer(state, timer)), timer)
     recording_rest_components.append(timer)  
   
     return recording_rest_components
@@ -64,9 +68,28 @@ def get_session_stop_go_components(state):
     
     start_sample(state)
     # Attach event to the header text that ends the sampling stage
-    prompt_label.after(get_sample_period(), lambda: end_sample(state, finished_prompt))
+    state["afters"]["check_collection"] = (prompt_label.after(5000, lambda: check_data_path_exists(state, finished_prompt)), prompt_label) 
+    state["afters"]["finish_prompt"] = (prompt_label.after(get_sample_period(), lambda: end_sample(state, finished_prompt)), prompt_label) 
 
     return [(prompt_label, {"pady": 150})]
+
+
+def get_session_error_components(state):
+    recording_error_components = []
+    error_notice_text = "An Error has occured."
+    error_notice = Label(text=error_notice_text, font=("Arial", 32), fg="red")
+    recording_error_components.append(error_notice)
+
+    error_explain_text = "Not recieving signal from mindmonitor app. Please check your settings click Ready\n when ready to resume."
+    error_explain = Label(text=error_explain_text, font=("Arial", 25))
+    recording_error_components.append(error_explain)
+
+    state["recording_session"]["state"] = recording_state.REST
+
+    ready_button = Button(command = lambda: mount_page(state, get_recording_in_progress(state)), text="Ready", font=("Arial", 48))
+    recording_error_components.append(ready_button)
+  
+    return recording_error_components
 
 
 # Returns sub-frames based on the current state
@@ -78,10 +101,16 @@ def get_recording_components(state):
     elif state["recording_session"]["state"] == recording_state.STOP or \
         state["recording_session"]["state"] == recording_state.GO:
         return get_session_stop_go_components(state)
+    elif state["recording_session"]["state"] == recording_state.ERROR:
+        return get_session_error_components(state)
 
 
 # Parent frame of the recording session page
 def get_recording_in_progress(state):
+    for after in state["afters"]:
+        if state["afters"][after] != None:
+            state["afters"][after][1].after_cancel(state["afters"][after][0])
+            state["afters"][after] = None
     state["render_state"] = render_state.SESSION_IN_PROGRESS
     recording_in_progress_components = []
     title = Label(text="Muse OSC Interface", font=("Arial", 48))

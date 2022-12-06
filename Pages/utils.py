@@ -1,5 +1,9 @@
+from datetime import datetime
+from os import path
+import time
 from state_enums import *
 import subprocess
+import tkinter as tk
 
 
 # Load the desired components and unload the components that are currently on screen
@@ -20,10 +24,12 @@ def mount_page(state, new_components):
 
 # Open osc server 
 def start_sample(state):
-    print("Starting sample collection")
     state["recording_session"]["active"] = True
     data_label = str(state["recording_session"]["state"]).split(".")[1]
-    state['osc_server'] = subprocess.Popen(['python','osc_server.py', data_label, state["recording_session"]["user"], str(get_sample_period())])
+    timestamp = (int)(time.mktime(datetime.now().timetuple()))
+    state["recording_session"]["timestamp"] = str(timestamp)
+    print("Starting sample collection for " + str(timestamp))
+    state['osc_server'] = subprocess.Popen(['python','osc_server.py', data_label, state["recording_session"]["user"], str(get_sample_period()), str(timestamp)])
     # state['osc_server'] = subprocess.Popen(['python','mock_osc_server.py', data_label, state["recording_session"]["user"]], get_sample_period())
 
 
@@ -31,13 +37,25 @@ def start_sample(state):
 def end_sample(state, refresh_function):
     print("Completed sample collection")
     state["recording_session"]["active"] = False
-    state['osc_server'].kill()  
-    state['osc_server'] = None
+    if state['osc_server'] != None:
+        state['osc_server'].kill()  
+        state['osc_server'] = None
 
     refresh_function(state)
 
+# Check if recieving data from mindmonitor
+def check_data_path_exists(state, refresh_function):
+    data_path = "./data/"
+    data_path += str(state["recording_session"]["state"]).split(".")[1] + "/"
+    data_path += state["recording_session"]["user"] + "_"
+    data_path += state["recording_session"]["timestamp"] + ".csv"
+    print("Check for existance of " + data_path)
+    if not path.exists(data_path):
+        state["recording_session"]["state"] = recording_state.ERROR
+        end_sample(state, refresh_function)
 
-# Time which a user will focus on a command for 
+
+# Time whioch a user will focus on a command for 
 def get_sample_period():
     return 15000
 

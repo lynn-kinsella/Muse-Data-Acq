@@ -10,7 +10,6 @@ from pythonosc import dispatcher
 from pythonosc import osc_server
 
 dateTimeObj_start = datetime.now()
-label_time = (int)(time.mktime(dateTimeObj_start.timetuple()))
 ip = "0.0.0.0"
 port = 5000
 
@@ -27,10 +26,10 @@ def eeg_handler(address: str,*args):
         for arg in args:
             printStr += ", "+str(arg)
         results_buffer.append(printStr)
-        if len(results_buffer) >= 10:
+        if len(results_buffer) >= 20:
             results_to_write = "\n".join(results_buffer)
             results_buffer = []
-            with open("./data/"+sys.argv[1] + "/" + sys.argv[2]+ "_" +str(label_time)+".csv", "a") as myfile:
+            with open("./data/"+sys.argv[1] + "/" + sys.argv[2]+ "_" +sys.argv[4]+".csv", "a") as myfile:
                 myfile.write(results_to_write+"\n")
     
     if (dateTimeObj-dateTimeObj_start).total_seconds() >= int(sys.argv[3])/1000:
