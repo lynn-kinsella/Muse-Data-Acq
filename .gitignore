@@ -1,8 +1,12 @@
 __pycache__
 .DS_Store
 .*.swp
+*.vscode
 data/STOP/
 data/GO/
 data/REST/
+compatibility_data/GO/
+compatibility_data/STOP/
+compatibility_data/REST/
 venv
 processed_signals/
