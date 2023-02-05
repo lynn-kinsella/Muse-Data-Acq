@@ -68,6 +68,6 @@ def get_sample_period():
 
 # Amount of samples to collect
 def get_sample_count():
-    return 10
+    return 20
 
 # ^ Reccomended 15000/10 for a 5 minute session

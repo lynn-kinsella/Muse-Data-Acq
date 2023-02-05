@@ -15,14 +15,17 @@ def get_session_done_components(state):
     
 # Updates the state and loads the next page in sequence
 def finished_prompt(state):    
+    state["recording_session"]["count"] += 1
     if state["recording_session"]["state"] == recording_state.REST or state["recording_session"]["state"] == recording_state.REMOVED:
-        state["recording_session"]["state"] = recording_state(randint(1,2))
-
-    elif state["recording_session"]["state"] == recording_state.GO or state["recording_session"]["state"] == recording_state.STOP:
-        state["recording_session"]["count"] += 1
         if state["recording_session"]["count"] >= get_sample_count():
             state["recording_session"]["state"] = recording_state.DONE
-        elif state["recording_session"]["count"] % 2 == 0:
+        else:
+            state["recording_session"]["state"] = recording_state(randint(1,2))
+
+    elif state["recording_session"]["state"] == recording_state.GO or state["recording_session"]["state"] == recording_state.STOP:
+        if state["recording_session"]["count"] >= get_sample_count():
+            state["recording_session"]["state"] = recording_state.DONE
+        elif (state["recording_session"]["count"] + 1) % 4 == 0:
             state["recording_session"]["state"] = recording_state.REMOVED
         else: 
             state["recording_session"]["state"] = recording_state.REST
@@ -61,8 +64,7 @@ def get_recording_rest_components(state):
 
 def get_recording_removed_components(state):
     recording_removed_components = []
-    text = ("Please remove your headset and place it back on.\n ",
-           "You have completed prompt number " + str(state["recording_session"]["count"]) + "\n Your next prompt begins in")
+    text = "Please remove your headset and place it back on.\n You have completed prompt number " + str(state["recording_session"]["count"]) + "\n Your next prompt begins in"
     rest_text = Label(text=text, font=("Arial", 25))
     placeholder = Label(text="")
     start_sample(state)
