@@ -1,6 +1,7 @@
 from ctypes import sizeof
 from datetime import datetime
 import sys
+import os
 import pandas as pd
 import numpy as np
 from scipy import signal
@@ -15,7 +16,7 @@ def viz(x, Tx, Wx):
     plt.show()
 
 def load_sample(sample_id):
-    data_id = str(sample_id.split("/")[2]) + "_" + str(sample_id.split("/")[3].split(".")[0])
+    data_id = os.path.basename(sample_id).split(".")[0]
     data = []
     with open(sample_id, 'r') as read_obj:
         csv_reader = reader(read_obj)

@@ -13,3 +13,4 @@ class recording_state (Enum):
     GO = 2
     DONE = 3
     ERROR = 4
+    REMOVED = 5

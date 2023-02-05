@@ -15,13 +15,15 @@ def get_session_done_components(state):
     
 # Updates the state and loads the next page in sequence
 def finished_prompt(state):    
-    if state["recording_session"]["state"] == recording_state.REST:
+    if state["recording_session"]["state"] == recording_state.REST or state["recording_session"]["state"] == recording_state.REMOVED:
         state["recording_session"]["state"] = recording_state(randint(1,2))
 
     elif state["recording_session"]["state"] == recording_state.GO or state["recording_session"]["state"] == recording_state.STOP:
         state["recording_session"]["count"] += 1
         if state["recording_session"]["count"] >= get_sample_count():
             state["recording_session"]["state"] = recording_state.DONE
+        elif state["recording_session"]["count"] % 2 == 0:
+            state["recording_session"]["state"] = recording_state.REMOVED
         else: 
             state["recording_session"]["state"] = recording_state.REST
 
@@ -56,6 +58,26 @@ def get_recording_rest_components(state):
     recording_rest_components.append(timer)  
   
     return recording_rest_components
+
+def get_recording_removed_components(state):
+    recording_removed_components = []
+    text = ("Please remove your headset and place it back on.\n ",
+           "You have completed prompt number " + str(state["recording_session"]["count"]) + "\n Your next prompt begins in")
+    rest_text = Label(text=text, font=("Arial", 25))
+    placeholder = Label(text="")
+    start_sample(state)
+    # Attach event to the header text that ends the resting stage
+    state["afters"]["check_collection"] = (placeholder.after(2000, lambda: check_data_path_exists(state, finished_prompt)), placeholder)
+    state["afters"]["finish_recording"] = (rest_text.after(get_sample_period(), lambda: end_sample(state, finished_prompt)), rest_text)
+    recording_removed_components.append(rest_text)
+    recording_removed_components.append(placeholder)
+
+    timer = Label(text=str(get_sample_period()//1000), font=("Arial", 25))
+    # Attach event to the timer text that updates it every second
+    state["afters"]["timer_update"] = (timer.after(1000, lambda: update_countdown_timer(state, timer)), timer)
+    recording_removed_components.append(timer)
+
+    return recording_removed_components
 
 
 # Returns sub-frame for stop or go based on the current state, as well as start recording
@@ -98,6 +120,8 @@ def get_session_error_components(state):
 def get_recording_components(state):
     if state["recording_session"]["state"] == recording_state.REST:
         return get_recording_rest_components(state)
+    elif state["recording_session"]["state"] == recording_state.REMOVED:
+        return get_recording_removed_components(state)
     elif state["recording_session"]["state"] == recording_state.DONE:
         return get_session_done_components(state)
     elif state["recording_session"]["state"] == recording_state.STOP or \
