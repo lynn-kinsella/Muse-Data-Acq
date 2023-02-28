@@ -86,7 +86,7 @@ def get_session_stop_go_components(state):
     state["afters"]["check_collection"] = (placeholder.after(2000, lambda: check_data_path_exists(state, finished_prompt)), placeholder) 
     state["afters"]["finish_prompt"] = (vid.after(get_sample_period(), lambda: end_sample(state, finished_prompt)), vid) 
 
-    return [(vid, {"pady": 150, "fill": "both", "expand"=True}), placeholder]
+    return [(vid, {"pady": 150, "fill": "both", "expand":True}), placeholder]
 
 
 def get_session_error_components(state):
