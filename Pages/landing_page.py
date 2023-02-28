@@ -1,5 +1,5 @@
 from tkinter import *
-from Pages.recording_page_with_videoplayer import get_recording_in_progress
+from Pages.recording_page import get_recording_in_progress
 from state_enums import *
 from Pages.utils import mount_page
 
