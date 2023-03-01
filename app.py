@@ -32,7 +32,7 @@ if __name__ == "__main__":
     window = Tk()
     state["window"] = window
     w, h = window.winfo_screenwidth(), window.winfo_screenheight()
-    window.attributes("-fullscreen", True)
+    window.attributes("-fullscreen", False)
     mount_page(state, get_landing_page(state))
 
     window.mainloop()
