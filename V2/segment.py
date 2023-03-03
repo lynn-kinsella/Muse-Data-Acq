@@ -66,7 +66,7 @@ class Segment(object):
         Override function for mounting the segment
         """
         # Update the state label
-        self.state['recording_session']['state'] = self.label
+        self.state['recording_session']['state'] = self.label.value
 
         # Exchange the components
         if len(self.state["rendered_components"]) != 0:
@@ -104,12 +104,9 @@ class StartOSCSegment(Segment):
         Constructor
         """
         timestamp = (int)(time.mktime(datetime.datetime.now().timetuple()))
-        self.datapath = state['recording_session']['user'] + '_' + str(timestamp) + '.csv'
+        self.datapath = ""
         super().__init__(self.Label.AMBIGUOUS, state)
 
-        dispatch = dispatcher.Dispatcher()
-        dispatch.map("/muse/eeg", osc.eeg_handler, self.state)
-        self.server = osc_server.ThreadingOSCUDPServer((self.ip, self.port), dispatcher)
 
     def check_data_exists(self):
         if not path.exists(self.datapath):
@@ -127,19 +124,23 @@ class StartOSCSegment(Segment):
         """
         self.state['recording_session']['active'] = True
 
-        open_time = datetime.datetime.now()
+        timestamp = (int)(time.mktime(datetime.datetime.now().timetuple()))
+        self.datapath = self.state['recording_session']['user'] + '_' + str(timestamp) + '.csv'
+        self.state['recording_session']['file'] = open(self.datapath, 'w')
+        dispatch = dispatcher.Dispatcher()
+        dispatch.map("/muse/eeg", osc.eeg_handler)
+        self.server = osc_server.BlockingOSCUDPServer((self.ip, self.port), dispatcher)
 
         osc_thread = threading.Thread(target=self.server.serve_forever)
         osc_thread.daemon = True
         osc_thread.start()
 
-        text = Label(text="Starting OSC Server...")
-        self.components.append(text)
+        prompt = Label(text="Starting OSC Server...", font=("Arial", 40))
+        self.components.append((prompt, {"pady": 50}))
 
-        text.after(1000, self.check_data_exists)
+        prompt.after(1000, self.check_data_exists)
 
         super().mount_segment()
-
 
 class EndOSCSegment(Segment):
     """
@@ -445,6 +446,8 @@ class ErrorSegment(PromptedSegment):
         self.components.append(Label(text=text, font=("Arial", 40)))
 
         self.button.configure(text='Exit', font=("Arial", 40))
+
+        self.components.append(self.button)
 
         super().mount_segment()
 

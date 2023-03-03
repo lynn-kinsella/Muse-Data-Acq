@@ -16,8 +16,9 @@ global results_buffer
 results_buffer = []
 
 
-def eeg_handler(address: str, fixed_args: list, *args):
+def eeg_handler(address: str, *args):
     state = fixed_args[0]
+    print(state)
     if not state['recording_session']['active']:
         sys.exit()
     global results_buffer

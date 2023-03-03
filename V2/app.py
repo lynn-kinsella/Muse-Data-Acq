@@ -13,6 +13,7 @@ def main():
             "session_count": 0,
             "total_sessions": 2,
             "active": False,
+            "file": None
         },
         "render_state": 0,
         "rendered_components": [],
