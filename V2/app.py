@@ -42,7 +42,11 @@ def main():
     collection = Collection.join(LandingSegment(state),
                                  IntroSegment(state),
                                  StartOSCSegment(state),
-                                 CountdownSegment(state, 4),
+                                 StopGoVideoSessionCollection(state=state, trials=50,
+                                                              rest_time=2, focus_time=4),
+                                 BreakSegment(state, 60*3),
+                                 StopGoVideoSessionCollection(state=state, trials=50,
+                                                              rest_time=2, focus_time=4),
                                  EndOSCSegment(state),
                                  DoneSegment(state))
 
