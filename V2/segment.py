@@ -109,7 +109,7 @@ class StartOSCSegment(Segment):
 
 
     def check_data_exists(self):
-        if not path.exists(self.datapath):
+        if not path.getsize(self.datapath):
             self.state['recording_session']['active'] = False
             self.server.server_close()
             segment = ErrorSegment(self.state)
@@ -128,8 +128,8 @@ class StartOSCSegment(Segment):
         self.datapath = self.state['recording_session']['user'] + '_' + str(timestamp) + '.csv'
         self.state['recording_session']['file'] = open(self.datapath, 'w')
         dispatch = dispatcher.Dispatcher()
-        dispatch.map("/muse/eeg", osc.eeg_handler)
-        self.server = osc_server.BlockingOSCUDPServer((self.ip, self.port), dispatcher)
+        dispatch.map("/muse/eeg", osc.eeg_handler, self.state)
+        self.server = osc_server.BlockingOSCUDPServer((self.ip, self.port), dispatch)
 
         osc_thread = threading.Thread(target=self.server.serve_forever)
         osc_thread.daemon = True
@@ -424,6 +424,8 @@ class DoneSegment(PromptedSegment):
         self.components.append(Label(text=text, font=("Arial", 40)))
 
         self.button.configure(text='Exit', font=("Arial", 40))
+
+        self.components.append(self.button)
 
         super().mount_segment()
 
