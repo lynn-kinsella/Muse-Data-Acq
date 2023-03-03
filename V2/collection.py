@@ -93,8 +93,8 @@ class StopGoVideoSessionCollection(Collection):
     """
     VARIATION_RANGE = 1
     COUNTDOWN_TIME = 3
-    GO_MEDIA = "../Pages/GO.mp4"
-    STOP_MEDIA = "../Pages/Left.mp4"
+    GO_MEDIA = "media/GO.mov"
+    STOP_MEDIA = "media/STOP.mov"
 
     def __init__(self, state, trials, rest_time, focus_time):
         """
