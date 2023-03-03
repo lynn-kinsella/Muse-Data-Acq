@@ -1,8 +1,8 @@
 import socket
 from tkinter import *
-#from state_enums import *
-from utils import mount_page
 from segment import *
+from collection import *
+
 
 def main():
     state = {
@@ -33,20 +33,24 @@ def main():
     w, h = window.winfo_screenwidth(), window.winfo_screenheight()
     window.attributes("-fullscreen", True)
 
-    ready_screen = PlaceHeadsetSegment(state)
-    countdown_screen = CountdownSegment(state, 4)
-    vid_screen = VideoSegment('../Pages/GO.mp4', 1, state, 4, 2)
-    vid_screen_2 = VideoSegment('../Pages/GO.mp4', 1, state, 4, 2)
-    remove_screen = RemoveHeadsetSegment(state)
-    rest_screen = RestSegment(state, 4, 2)
+    session = StopGoVideoSessionCollection(state, 5, 2, 4)
+    session2 = StopGoVideoSessionCollection(state, 5, 2, 4)
 
-    ready_screen.next_segment = countdown_screen
-    countdown_screen.next_segment = vid_screen
-    vid_screen.next_segment = vid_screen_2
-    vid_screen_2.next_segment = remove_screen
-    remove_screen.next_segment = rest_screen
+    break_session = BreakCollection(state, 60*3)
 
-    ready_screen.mount_segment()
+    collection = Collection.join(LandingSegment(state),
+                                 IntroSegment(state),
+                                 StartOSCSegment(state),
+                                 StopGoVideoSessionCollection(state=state, trials=50,
+                                                              rest_time=2, focus_time=4),
+                                 BreakSegment(state, 60*3),
+                                 StopGoVideoSessionCollection(state=state, trials=50,
+                                                              rest_time=2, focus_time=4),
+                                 EndOSCSegment(state),
+                                 DoneSegment(state))
+
+    collection.play()
+
 
     try:
         window.mainloop()

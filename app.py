@@ -35,6 +35,8 @@ if __name__ == "__main__":
     window.attributes("-fullscreen", False)
     mount_page(state, get_landing_page(state))
 
-    window.mainloop()
+    while True:
+        window.update_idletasks()
+        window.update()
 
     
