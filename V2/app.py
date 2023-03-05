@@ -34,11 +34,6 @@ def main():
     w, h = window.winfo_screenwidth(), window.winfo_screenheight()
     window.attributes("-fullscreen", True)
 
-    session = StopGoVideoSessionCollection(state, 5, 2, 4)
-    session2 = StopGoVideoSessionCollection(state, 5, 2, 4)
-
-    break_session = BreakCollection(state, 60*3)
-
     collection = Collection.join(LandingSegment(state),
                                  IntroSegment(state),
                                  StartOSCSegment(state),

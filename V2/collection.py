@@ -1,6 +1,6 @@
 from segment import *
 import random
-import copy
+import glob
 
 class Collection(object):
     """
@@ -93,8 +93,8 @@ class StopGoVideoSessionCollection(Collection):
     """
     VARIATION_RANGE = 1
     COUNTDOWN_TIME = 3
-    GO_MEDIA = "media/GO.mov"
-    STOP_MEDIA = "media/STOP.mov"
+    GO_MEDIA = glob.glob('media/go_*')
+    STOP_MEDIA = glob.glob('media/stop_straight_*')
 
     def __init__(self, state, trials, rest_time, focus_time):
         """
@@ -121,9 +121,9 @@ class StopGoVideoSessionCollection(Collection):
                        "label": Segment.Label.STOP})
 
         for i in range(self.trials):
-            clss = classes[int(random.random()*len(classes))]
+            clss = random.choice(classes)
 
-            self.add_segment(VideoSegment(media=clss['media'], label=clss['label'],
+            self.add_segment(VideoSegment(media=random.choice(clss['media']), label=clss['label'],
                                           state=self.state, duration_avg=self.focus_time,
                                           duration_range=self.VARIATION_RANGE))
 
