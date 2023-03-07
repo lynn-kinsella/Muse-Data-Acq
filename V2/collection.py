@@ -93,8 +93,8 @@ class StopGoVideoSessionCollection(Collection):
     """
     VARIATION_RANGE = 1
     COUNTDOWN_TIME = 3
-    GO_MEDIA = glob.glob('media/go_*')
-    STOP_MEDIA = glob.glob('media/stop_straight_*')
+    GO_MEDIA = glob.glob('test_media/go_*')
+    STOP_MEDIA = glob.glob('test_media/stop_straight_*')
 
     def __init__(self, state, trials, rest_time, focus_time):
         """

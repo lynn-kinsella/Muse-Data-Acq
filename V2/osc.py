@@ -14,12 +14,8 @@ dateTimeObj_start = datetime.now()
 
 
 def eeg_handler(address: str, fixed_args: list, *args):
-    state = fixed_args[0]
-    file = state['recording_session']['file']
-    label = state['recording_session']['state']
-
-    if not state['recording_session']['active']:
-        sys.exit()
+    label = fixed_args[0].value
+    file = fixed_args[1]
 
     global results_buffer
     dateTimeObj = datetime.now()

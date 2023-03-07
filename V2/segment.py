@@ -11,7 +11,7 @@ import osc
 from pythonosc import dispatcher, osc_server
 import datetime
 from time import sleep
-import threading
+from multiprocessing import Process
 from os import path
 
 LOGGER = logging.getLogger('GUI')
@@ -66,7 +66,7 @@ class Segment(object):
         Override function for mounting the segment
         """
         # Update the state label
-        self.state['recording_session']['state'] = self.label.value
+        self.state['recording_session']['state'].value = self.label.value
 
         # Exchange the components
         if len(self.state["rendered_components"]) != 0:
@@ -111,12 +111,20 @@ class StartOSCSegment(Segment):
     def check_data_exists(self):
         if not path.getsize(self.datapath):
             self.state['recording_session']['active'] = False
-            self.server.server_close()
+            self.state['osc_server'].kill()
             segment = ErrorSegment(self.state)
             segment.mount_segment()
         else:
             self.mount_next_segment()
 
+    @staticmethod
+    def start_osc_server(state, ip, port, filepath):
+        file = open(filepath, 'w')
+        dispatch = dispatcher.Dispatcher()
+        dispatch.map("/muse/eeg", osc.eeg_handler, state, file)
+        server = osc_server.BlockingOSCUDPServer((ip, port), dispatch)
+
+        server.serve_forever()
     
     def mount_segment(self):
         """
@@ -126,17 +134,14 @@ class StartOSCSegment(Segment):
 
         timestamp = (int)(time.mktime(datetime.datetime.now().timetuple()))
         self.datapath = self.state['recording_session']['user'] + '_' + str(timestamp) + '.csv'
-        self.state['recording_session']['file'] = open(self.datapath, 'w')
-        dispatch = dispatcher.Dispatcher()
-        dispatch.map("/muse/eeg", osc.eeg_handler, self.state)
-        self.server = osc_server.BlockingOSCUDPServer((self.ip, self.port), dispatch)
-
-        osc_thread = threading.Thread(target=self.server.serve_forever)
-        osc_thread.daemon = True
-        osc_thread.start()
 
         prompt = Label(text="Starting OSC Server...", font=("Arial", 40))
         self.components.append((prompt, {"pady": 50}))
+
+        osc_server = Process(target=self.start_osc_server, args=(self.state['recording_session']['state'], self.ip, self.port, self.datapath))
+        osc_server.start()
+
+        self.state['osc_server'] = osc_server
 
         prompt.after(1000, self.check_data_exists)
 
@@ -157,6 +162,7 @@ class EndOSCSegment(Segment):
         End the thread
         """
         self.state['recording_session']['active'] = False
+        self.state['osc_server'].kill()
 
         self.mount_next_segment()
 
@@ -174,7 +180,7 @@ class TimedSegment(Segment):
         """
         Generate the period of the segment based on the durations given in ms
         """ 
-        return int(1000*self.duration_avg + random()*self.duration_range - self.duration_range/2)
+        return int(1000*self.duration_avg + random()*self.duration_range*1000 - self.duration_range*1000/2)
 
     def update_countdown_timer(self, timer, time_ms, minutes=False):
         """

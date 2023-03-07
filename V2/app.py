@@ -2,18 +2,17 @@ import socket
 from tkinter import *
 from segment import *
 from collection import *
-
+from multiprocessing import Manager
 
 def main():
     state = {
         "recording_session": {
             "user":"",
-            "state": 0,
+            "state": Manager().Value('state', Segment.Label.AMBIGUOUS.value),
             "count": 0,
             "session_count": 0,
             "total_sessions": 2,
             "active": False,
-            "file": None
         },
         "render_state": 0,
         "rendered_components": [],
@@ -38,10 +37,10 @@ def main():
                                  IntroSegment(state),
                                  StartOSCSegment(state),
                                  StopGoVideoSessionCollection(state=state, trials=50,
-                                                              rest_time=2, focus_time=4),
+                                                              rest_time=2, focus_time=2),
                                  BreakCollection(state, 60*3),
                                  StopGoVideoSessionCollection(state=state, trials=50,
-                                                              rest_time=2, focus_time=4),
+                                                              rest_time=2, focus_time=2),
                                  EndOSCSegment(state),
                                  DoneSegment(state))
 
