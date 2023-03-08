@@ -1,6 +1,7 @@
 from segment import *
 import random
 import glob
+import os
 
 class Collection(object):
     """
@@ -93,8 +94,8 @@ class StopGoVideoSessionCollection(Collection):
     """
     VARIATION_RANGE = 1
     COUNTDOWN_TIME = 3
-    GO_MEDIA = glob.glob('test_media/go_*')
-    STOP_MEDIA = glob.glob('test_media/stop_straight_*')
+    GO_MEDIA = glob.glob('../../Training Footage/Faster/go_*')
+    STOP_MEDIA = glob.glob('../../Training Footage/Faster/stop_straight_*')
 
     def __init__(self, state, trials, rest_time, focus_time):
         """
@@ -130,3 +131,64 @@ class StopGoVideoSessionCollection(Collection):
             self.add_segment(RestSegment(state=self.state, duration_avg=self.rest_time,
                                          duration_range=self.VARIATION_RANGE))
 
+class VariableLengthVideoSessionCollection(Collection):
+    """
+    Class defining the variable length video session
+    """
+    COUNTDOWN_TIME = 3
+
+    def __init__(self, state, media_dir):
+        """
+        Constructor
+        """
+        self.media = self.collect_media(media_dir)
+        super().__init__(state)
+        self.populate_session()
+
+    def collect_media(self, media_dir):
+        
+        labels = glob.glob(os.path.join(media_dir, '*'))
+
+        files = []
+        for label_path in labels:
+            clip_files = glob.glob(os.path.join(label_path, "*.mp4"))
+
+            label_ind = int(os.path.basename(label_path)[0])
+            for clip in clip_files:
+                files.append((Segment.Label(label_ind), clip))
+
+
+        return sorted(files, key=lambda x: os.path.basename(x[1]))
+
+    def populate_session(self):
+        """
+        Populate the session with segments
+        """
+        # Add countdown segment
+        self.add_segment(CountdownSegment(self.state, duration_avg=self.COUNTDOWN_TIME))
+
+        for label, media_path in self.media:
+            self.add_segment(VariableLengthVideoSegment(media_path, label, self.state))
+
+class ContinuousVideoSessionCollection(Collection):
+    """
+    Class defining the continuous video session
+    """
+    COUNTDOWN_TIME = 3
+
+    def __init__(self, state, media):
+        """
+        Constructor
+        """
+        self.media = media
+        super().__init__(state)
+        self.populate_session()
+
+    def populate_session(self):
+        """
+        Populate the session with segments
+        """
+        # Add countdown segment
+        self.add_segment(CountdownSegment(self.state, duration_avg=self.COUNTDOWN_TIME))
+
+        self.add_segment(InteractiveVariableLengthVideoSegment(self.media, None, self.state))

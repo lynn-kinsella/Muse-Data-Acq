@@ -2,17 +2,19 @@ import log
 import logging
 import time
 import copy
+from threading import Thread
 from enum import Enum
 from utils import mount_page, load_video
 from tkinter import *
 from random import random
-from tkVideoPlayer import TkinterVideo
 import osc
 from pythonosc import dispatcher, osc_server
 import datetime
+from videoplayer import Video
 from time import sleep
 from multiprocessing import Process
 from os import path
+from pynput import keyboard
 
 LOGGER = logging.getLogger('GUI')
 log.configure_logger(LOGGER, 'training_gui.log')
@@ -22,11 +24,13 @@ class Segment(object):
     Defines the primitive type of segment
     """
     class Label(Enum):
-        REST = 0
-        STOP = 1
-        GO = 2
-        DISCONNECTED = 3
-        AMBIGUOUS = 4
+        STOP = 0
+        GO = 1
+        LEFT = 2
+        RIGHT = 3
+        REST = 4
+        DISCONNECTED = 5
+        AMBIGUOUS = 6
     
     def __init__(self, label: Label, state: dict):
         """
@@ -66,7 +70,10 @@ class Segment(object):
         Override function for mounting the segment
         """
         # Update the state label
-        self.state['recording_session']['state'].value = self.label.value
+        if self.label:
+            self.state['recording_session']['state'].value = self.label.value
+
+        self.state['render_state'] = self.__class__.__name__
 
         # Exchange the components
         if len(self.state["rendered_components"]) != 0:
@@ -103,7 +110,6 @@ class StartOSCSegment(Segment):
         """
         Constructor
         """
-        timestamp = (int)(time.mktime(datetime.datetime.now().timetuple()))
         self.datapath = ""
         super().__init__(self.Label.AMBIGUOUS, state)
 
@@ -166,6 +172,96 @@ class EndOSCSegment(Segment):
 
         self.mount_next_segment()
 
+class VariableLengthVideoSegment(Segment):
+    """
+    Defines a video type of segment for prediction training
+    """
+    def __init__(self, media: str, label: Segment.Label,
+                 state: dict):
+        """
+        Constructor
+        """
+        super().__init__(label, state)
+        self.video = self.load_video(media)
+
+    def video_callback(self):
+        """
+        Callback for the end of the video
+        """
+        self.mount_next_segment()
+
+    def load_video(self, file):
+        vidplayer = Video(self.video_callback, master=self.state["window"], scaled=True, keep_aspect=True)
+        vidplayer.load(file)
+        return vidplayer
+
+    def mount_segment(self):
+        """
+        Mount a segment GUI and record data
+        """
+        # Update the state label
+        self.state['recording_session']['count'] += 1
+
+        # Start video
+        self.video.play()
+
+        # mount the page
+        self.components.append((self.video, {"expand":True,
+                                       "fill":"both"}))
+
+        super().mount_segment()
+
+class InteractiveVariableLengthVideoSegment(VariableLengthVideoSegment):
+    """
+    Defines a continuous video session with interactive component
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Constructor
+        """
+        super().__init__(*args, **kwargs)
+        self.kill = False
+
+    def video_callback(self):
+        """
+        Callback for the end of the video
+        """
+        self.kill = True
+        self.mount_next_segment()
+
+    def on_press(self, key):
+        """
+        Handle the key press by setting the label
+        """
+        # Disable if not in video segment
+        if self.kill:
+            LOGGER.info('end of segment')
+            return False
+
+        try:
+            k = key.char  # single-char keys
+        except:
+            k = key.name  # other keys
+
+        LOGGER.info(k)
+        if k == 'w':
+            self.state['recording_session']['state'].value = Segment.Label.GO.value
+        elif k == 'a':
+            self.state['recording_session']['state'].value = Segment.Label.LEFT.value
+        elif k == 's':
+            self.state['recording_session']['state'].value = Segment.Label.STOP.value
+        elif k == 'd':
+            self.state['recording_session']['state'].value = Segment.Label.RIGHT.value
+
+
+    def mount_segment(self):
+        listener = keyboard.Listener(on_press=self.on_press)
+        listener.start()
+
+        super().mount_segment()
+
+        
 class TimedSegment(Segment):
     """
     Defines a timed segment type, child of Segment
@@ -237,6 +333,7 @@ class VideoSegment(TimedSegment):
                                        "fill":"both"}))
 
         super().mount_segment()
+
 
 class RestSegment(TimedSegment):
     """

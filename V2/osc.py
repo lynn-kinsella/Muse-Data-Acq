@@ -27,3 +27,4 @@ def eeg_handler(address: str, fixed_args: list, *args):
             printStr += ", "+str(arg)
 
         file.write(printStr+'\n')
+        file.flush()
