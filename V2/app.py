@@ -36,10 +36,9 @@ def main():
     collection = Collection.join(LandingSegment(state),
                                  IntroSegment(state),
                                  StartOSCSegment(state),
-                                 #ContinuousVideoSessionCollection(state=state, media='media/New_York/New_York_000.mp4'),
-                                 ContinuousVideoSessionCollection(state=state, media='../../Training Footage/Faster/go_left_medium.mp4'),
+                                 ContinuousVideoSessionCollection(state=state, media='media/New_York/New_York000.mp4'),
                                  BreakCollection(state, 60*3),
-                                 ContinuousVideoSessionCollection(state=state, media='../../Training Footage/Faster/go_left_medium.mp4'),
+                                 ContinuousVideoSessionCollection(state=state, media='media/New_York/New_York000.mp4'),
                                  EndOSCSegment(state),
                                  DoneSegment(state))
 

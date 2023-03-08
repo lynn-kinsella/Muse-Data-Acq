@@ -24,11 +24,11 @@ class Segment(object):
     Defines the primitive type of segment
     """
     class Label(Enum):
-        STOP = 0
-        GO = 1
+        BRAKE = 0
+        ACCELERATE = 1
         LEFT = 2
         RIGHT = 3
-        REST = 4
+        PASSIVE = 4
         DISCONNECTED = 5
         AMBIGUOUS = 6
     
@@ -222,6 +222,7 @@ class InteractiveVariableLengthVideoSegment(VariableLengthVideoSegment):
         """
         super().__init__(*args, **kwargs)
         self.kill = False
+        self.command = Label(text = Segment.Label.PASSIVE.name, font=("Arial", 60))
 
     def video_callback(self):
         """
@@ -246,19 +247,37 @@ class InteractiveVariableLengthVideoSegment(VariableLengthVideoSegment):
 
         LOGGER.info(k)
         if k == 'w':
-            self.state['recording_session']['state'].value = Segment.Label.GO.value
+            self.state['recording_session']['state'].value = Segment.Label.ACCELERATE.value
+            self.command.configure(text = Segment.Label.ACCELERATE.name)
         elif k == 'a':
             self.state['recording_session']['state'].value = Segment.Label.LEFT.value
+            self.command.configure(text = Segment.Label.LEFT.name)
         elif k == 's':
-            self.state['recording_session']['state'].value = Segment.Label.STOP.value
+            self.state['recording_session']['state'].value = Segment.Label.BRAKE.value
+            self.command.configure(text = Segment.Label.BRAKE.name)
         elif k == 'd':
             self.state['recording_session']['state'].value = Segment.Label.RIGHT.value
+            self.command.configure(text = Segment.Label.RIGHT.name)
+
+    def on_release(self, key):
+        """
+        Handle what happens when the key is released
+        """
+        # Disable if not in video segment
+        if self.kill:
+            LOGGER.info('end of segment')
+            return False
+
+        self.state['recording_session']['state'].value = Segment.Label.PASSIVE.value
+        self.command.configure(text = Segment.Label.PASSIVE.name)
 
 
     def mount_segment(self):
-        listener = keyboard.Listener(on_press=self.on_press)
+        listener = keyboard.Listener(on_press=self.on_press,
+                                     on_release=self.on_release)
         listener.start()
 
+        self.components.append(self.command)
         super().mount_segment()
 
         
@@ -343,7 +362,7 @@ class RestSegment(TimedSegment):
         """
         Constructor
         """
-        super().__init__(self.Label.REST, state, duration_avg, duration_range)
+        super().__init__(self.Label.PASSIVE, state, duration_avg, duration_range)
 
     def mount_segment(self):
         """
