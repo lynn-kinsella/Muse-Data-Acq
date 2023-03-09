@@ -3,12 +3,15 @@ from tkinter import *
 from segment import *
 from collection import *
 from multiprocessing import Manager
+import glob
+import random
 
 def main():
     state = {
         "recording_session": {
             "user":"",
             "state": Manager().Value('state', Segment.Label.AMBIGUOUS.value),
+            "direction_state": Manager().Value('direction', Segment.Label.AMBIGUOUS.value),
             "count": 0,
             "session_count": 0,
             "total_sessions": 2,
@@ -33,12 +36,17 @@ def main():
     w, h = window.winfo_screenwidth(), window.winfo_screenheight()
     window.attributes("-fullscreen", True)
 
+    media = glob.glob('media/*')
+
+    media_sample = random.sample(media, 2)
+    print(media_sample)
+
     collection = Collection.join(LandingSegment(state),
                                  IntroSegment(state),
                                  StartOSCSegment(state),
-                                 ContinuousVideoSessionCollection(state=state, media='media/New_York/New_York000.mp4'),
-                                 BreakCollection(state, 60*3),
-                                 ContinuousVideoSessionCollection(state=state, media='media/New_York/New_York000.mp4'),
+                                 ContinuousVideoSessionCollection(state=state, media=media_sample[0]),
+                                 BreakCollection(state, 60*2),
+                                 ContinuousVideoSessionCollection(state=state, media=media_sample[1]),
                                  EndOSCSegment(state),
                                  DoneSegment(state))
 

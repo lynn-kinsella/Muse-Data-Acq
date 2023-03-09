@@ -25,7 +25,7 @@ class Segment(object):
     """
     class Label(Enum):
         BRAKE = 0
-        ACCELERATE = 1
+        ACCEL= 1
         LEFT = 2
         RIGHT = 3
         PASSIVE = 4
@@ -72,6 +72,7 @@ class Segment(object):
         # Update the state label
         if self.label:
             self.state['recording_session']['state'].value = self.label.value
+            self.state['recording_session']['direction_state'].value = self.label.value
 
         self.state['render_state'] = self.__class__.__name__
 
@@ -124,10 +125,10 @@ class StartOSCSegment(Segment):
             self.mount_next_segment()
 
     @staticmethod
-    def start_osc_server(state, ip, port, filepath):
+    def start_osc_server(state, direction, ip, port, filepath):
         file = open(filepath, 'w')
         dispatch = dispatcher.Dispatcher()
-        dispatch.map("/muse/eeg", osc.eeg_handler, state, file)
+        dispatch.map("/muse/eeg", osc.eeg_handler, state, direction, file)
         server = osc_server.BlockingOSCUDPServer((ip, port), dispatch)
 
         server.serve_forever()
@@ -144,7 +145,7 @@ class StartOSCSegment(Segment):
         prompt = Label(text="Starting OSC Server...", font=("Arial", 40))
         self.components.append((prompt, {"pady": 50}))
 
-        osc_server = Process(target=self.start_osc_server, args=(self.state['recording_session']['state'], self.ip, self.port, self.datapath))
+        osc_server = Process(target=self.start_osc_server, args=(self.state['recording_session']['state'], self.state['recording_session']['direction_state'], self.ip, self.port, self.datapath))
         osc_server.start()
 
         self.state['osc_server'] = osc_server
@@ -222,7 +223,7 @@ class InteractiveVariableLengthVideoSegment(VariableLengthVideoSegment):
         """
         super().__init__(*args, **kwargs)
         self.kill = False
-        self.command = Label(text = Segment.Label.PASSIVE.name, font=("Arial", 60))
+        self.command = Label(font=('Arial', 60))
 
     def video_callback(self):
         """
@@ -247,17 +248,17 @@ class InteractiveVariableLengthVideoSegment(VariableLengthVideoSegment):
 
         LOGGER.info(k)
         if k == 'w':
-            self.state['recording_session']['state'].value = Segment.Label.ACCELERATE.value
-            self.command.configure(text = Segment.Label.ACCELERATE.name)
+            self.state['recording_session']['state'].value = Segment.Label.ACCEL.value
         elif k == 'a':
-            self.state['recording_session']['state'].value = Segment.Label.LEFT.value
-            self.command.configure(text = Segment.Label.LEFT.name)
+            self.state['recording_session']['direction_state'].value = Segment.Label.LEFT.value
         elif k == 's':
             self.state['recording_session']['state'].value = Segment.Label.BRAKE.value
-            self.command.configure(text = Segment.Label.BRAKE.name)
         elif k == 'd':
-            self.state['recording_session']['state'].value = Segment.Label.RIGHT.value
-            self.command.configure(text = Segment.Label.RIGHT.name)
+            self.state['recording_session']['direction_state'].value = Segment.Label.RIGHT.value
+
+        self.command.configure(text = '%s\t\t\t%s' % \
+                               (Segment.Label(self.state['recording_session']['state'].value).name,
+                                Segment.Label(self.state['recording_session']['direction_state'].value).name))
 
     def on_release(self, key):
         """
@@ -268,13 +269,30 @@ class InteractiveVariableLengthVideoSegment(VariableLengthVideoSegment):
             LOGGER.info('end of segment')
             return False
 
-        self.state['recording_session']['state'].value = Segment.Label.PASSIVE.value
-        self.command.configure(text = Segment.Label.PASSIVE.name)
+        try:
+            k = key.char  # single-char keys
+        except:
+            k = key.name  # other keys
+
+        if k == 'w' or k == 's':
+            self.state['recording_session']['state'].value = Segment.Label.PASSIVE.value
+        elif k == 'a' or k == 'd':
+            self.state['recording_session']['direction_state'].value = Segment.Label.PASSIVE.value
+
+        self.command.configure(text = '%s\t\t\t%s' % \
+                               (Segment.Label(self.state['recording_session']['state'].value).name,
+                                Segment.Label(self.state['recording_session']['direction_state'].value).name))
 
 
     def mount_segment(self):
+        self.state['recording_session']['state'].value = Segment.Label.PASSIVE.value
+        self.state['recording_session']['direction_state'].value = Segment.Label.PASSIVE.value
+        self.command.configure(text = '%s\t\t\t%s' % \
+                               (Segment.Label(self.state['recording_session']['state'].value).name,
+                                Segment.Label(self.state['recording_session']['direction_state'].value).name))
         listener = keyboard.Listener(on_press=self.on_press,
                                      on_release=self.on_release)
+        #listener = keyboard.Listener(on_press=self.on_press)
         listener.start()
 
         self.components.append(self.command)

@@ -14,15 +14,17 @@ dateTimeObj_start = datetime.now()
 
 
 def eeg_handler(address: str, fixed_args: list, *args):
-    label = fixed_args[0].value
-    file = fixed_args[1]
+    speed = fixed_args[0].value
+    direction = fixed_args[1].value
+    file = fixed_args[2]
 
     global results_buffer
     dateTimeObj = datetime.now()
     timestamp = time.time_ns() 
     printStr = str(timestamp)
     if len(args) == 4: 
-        printStr += ", " + str(label)
+        printStr += ", " + str(speed)
+        printStr += ", " + str(direction)
         for arg in args:
             printStr += ", "+str(arg)
 
