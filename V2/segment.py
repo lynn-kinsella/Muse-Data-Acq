@@ -246,7 +246,6 @@ class InteractiveVariableLengthVideoSegment(VariableLengthVideoSegment):
         except:
             k = key.name  # other keys
 
-        LOGGER.info(k)
         if k == 'w':
             self.state['recording_session']['state'].value = Segment.Label.ACCEL.value
         elif k == 'a':
