@@ -36,18 +36,17 @@ def main():
     w, h = window.winfo_screenwidth(), window.winfo_screenheight()
     window.attributes("-fullscreen", True)
 
-    media = glob.glob('media/*')
+    media = glob.glob('test_media/*')
 
     media_sample = random.sample(media, 2)
-    print(media_sample)
 
     collection = Collection.join(LandingSegment(state),
                                  IntroSegment(state),
-                                 StartOSCSegment(state),
+                                 #StartOSCSegment(state),
                                  ContinuousVideoSessionCollection(state=state, media=media_sample[0]),
-                                 BreakCollection(state, 60*2),
+                                 BreakCollection(state, 60),
                                  ContinuousVideoSessionCollection(state=state, media=media_sample[1]),
-                                 EndOSCSegment(state),
+                                 #EndOSCSegment(state),
                                  DoneSegment(state))
 
     collection.play()
