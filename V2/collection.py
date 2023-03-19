@@ -192,3 +192,4 @@ class ContinuousVideoSessionCollection(Collection):
         self.add_segment(CountdownSegment(self.state, duration_avg=self.COUNTDOWN_TIME))
 
         self.add_segment(InteractiveVariableLengthVideoSegment(self.media, None, self.state))
+

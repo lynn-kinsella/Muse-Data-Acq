@@ -150,7 +150,7 @@ class StartOSCSegment(Segment):
 
         self.state['osc_server'] = osc_server
 
-        prompt.after(1000, self.check_data_exists)
+        prompt.after(3000, self.check_data_exists)
 
         super().mount_segment()
 
@@ -656,5 +656,86 @@ class IntroSegment(PromptedSegment):
         self.components.append(session_info)
         self.components.append((self.button, {"pady": 10}))
 
+        super().mount_segment()
+
+class InteractiveGameSegment(PromptedSegment):
+    """
+    Defines a continuous video session with interactive component
+    """
+
+    def __init__(self, state):
+        """
+        Constructor
+        """
+        super().__init__(label=None, state=state)
+        self.kill = False
+        self.command = Label(font=('Arial', 60))
+
+    def on_press(self, key):
+        """
+        Handle the key press by setting the label
+        """
+        # Disable if not in video segment
+        if self.kill:
+            LOGGER.info('end of segment')
+            return False
+
+        try:
+            k = key.char  # single-char keys
+        except:
+            k = key.name  # other keys
+
+        if k == 'w':
+            self.state['recording_session']['state'].value = Segment.Label.ACCEL.value
+        elif k == 'a':
+            self.state['recording_session']['direction_state'].value = Segment.Label.LEFT.value
+        elif k == 's':
+            self.state['recording_session']['state'].value = Segment.Label.BRAKE.value
+        elif k == 'd':
+            self.state['recording_session']['direction_state'].value = Segment.Label.RIGHT.value
+
+        self.command.configure(text = '%s\t\t\t%s' % \
+                               (Segment.Label(self.state['recording_session']['state'].value).name,
+                                Segment.Label(self.state['recording_session']['direction_state'].value).name))
+
+    def on_release(self, key):
+        """
+        Handle what happens when the key is released
+        """
+        # Disable if not in video segment
+        if self.kill:
+            LOGGER.info('end of segment')
+            return False
+
+        try:
+            k = key.char  # single-char keys
+        except:
+            k = key.name  # other keys
+
+        if k == 'w' or k == 's':
+            self.state['recording_session']['state'].value = Segment.Label.PASSIVE.value
+        elif k == 'a' or k == 'd':
+            self.state['recording_session']['direction_state'].value = Segment.Label.PASSIVE.value
+
+        self.command.configure(text = '%s\t\t\t%s' % \
+                               (Segment.Label(self.state['recording_session']['state'].value).name,
+                                Segment.Label(self.state['recording_session']['direction_state'].value).name))
+
+
+    def mount_segment(self):
+        self.state['recording_session']['state'].value = Segment.Label.PASSIVE.value
+        self.state['recording_session']['direction_state'].value = Segment.Label.PASSIVE.value
+        self.command.configure(text = '%s\t\t\t%s' % \
+                               (Segment.Label(self.state['recording_session']['state'].value).name,
+                                Segment.Label(self.state['recording_session']['direction_state'].value).name))
+        listener = keyboard.Listener(on_press=self.on_press,
+                                     on_release=self.on_release)
+        #listener = keyboard.Listener(on_press=self.on_press)
+        listener.start()
+
+        self.button.configure(text="Done", font=("Arial", 48))
+
+        self.components.append(self.command)
+        self.components.append(self.button)
         super().mount_segment()
 

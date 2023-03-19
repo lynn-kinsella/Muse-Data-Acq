@@ -42,11 +42,13 @@ def main():
 
     collection = Collection.join(LandingSegment(state),
                                  IntroSegment(state),
-                                 #StartOSCSegment(state),
-                                 ContinuousVideoSessionCollection(state=state, media=media_sample[0]),
+                                 StartOSCSegment(state),
+                                 CountdownSegment(state, 3),
+                                 InteractiveGameSegment(state),
                                  BreakCollection(state, 60),
-                                 ContinuousVideoSessionCollection(state=state, media=media_sample[1]),
-                                 #EndOSCSegment(state),
+                                 CountdownSegment(state, 3),
+                                 InteractiveGameSegment(state),
+                                 EndOSCSegment(state),
                                  DoneSegment(state))
 
     collection.play()
